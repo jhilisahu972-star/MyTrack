@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="theme-color" content="#7C3AED"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="MyTrack"/>
+  <link rel="manifest" href="manifest.json"/>
+  <title>MyTrack — Habit Tracker</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Fraunces:ital,opsz,wght@1,9..144,700&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#0A0F1E;--surface:#131929;--card:#1A2236;--card2:#1E2840;
+      --border:#2A3650;--border2:#3A4A68;
+      --accent:#7C3AED;--accent-h:#6D28D9;--accent-glow:#7C3AED33;
+      --done:#10B981;--done-bg:#10B98112;--done-border:#10B98140;
+      --gold:#F59E0B;--xp:#818CF8;
+      --text:#F1F5F9;--muted:#64748B;--muted2:#94A3B8;
+      --danger:#F87171;--warn:#FBBF24;
+      --cat-health:#10B981;--cat-mind:#7C3AED;--cat-body:#F59E0B;
+      --cat-social:#EC4899;--cat-work:#3B82F6;--cat-other:#64748B;
+    }
+    html{scroll-behavior:smooth}
+    body{
+      font-family:'DM Sans',sans-serif;
+      background:var(--bg);color:var(--text);
+      min-height:100vh;padding:0 0 5rem;
+      overflow-x:hidden;
+    }
+
+    /* ── HEADER ── */
+    .header{
+      text-align:center;padding:2.5rem 1rem 1rem;
+      position:relative;
+    }
+    .brand{
+      font-family:'Fraunces',serif;font-style:italic;
+      font-size:clamp(2.2rem,7vw,3.2rem);line-height:1;
+      background:linear-gradient(135deg,#a78bfa 0%,#34d399 100%);
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+    }
+    .tagline{color:var(--muted2);font-size:0.8rem;margin-top:0.3rem;letter-spacing:0.08em;text-transform:uppercase;font-weight:500}
+    .date-label{color:var(--muted2);font-size:0.875rem;margin-top:0.5rem}
+
+    /* ── QUOTE BANNER ── */
+    .quote-bar{
+      max-width:580px;margin:1rem auto;
+      background:var(--surface);border:1px solid var(--border);
+      border-radius:12px;padding:0.75rem 1.1rem;
+      display:flex;align-items:center;gap:0.7rem;
+      font-size:0.82rem;color:var(--muted2);font-style:italic;
+      animation:fadeIn 0.5s ease;
+    }
+    .quote-icon{font-size:1rem;flex-shrink:0}
+
+    /* ── XP BAR ── */
+    .xp-panel{
+      max-width:580px;margin:0 auto 1.5rem;
+      background:var(--surface);border:1px solid var(--border);
+      border-radius:16px;padding:1rem 1.25rem;
+    }
+    .xp-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.6rem}
+    .xp-level{
+      display:flex;align-items:center;gap:0.5rem;
+      font-weight:700;font-size:1rem;color:var(--xp);
+    }
+    .level-badge{
+      background:var(--xp);color:#fff;
+      border-radius:8px;padding:0.15rem 0.5rem;
+      font-size:0.72rem;font-weight:700;letter-spacing:0.04em;
+    }
+    .xp-pts{font-size:0.78rem;color:var(--muted2)}
+    .xp-bar-wrap{height:8px;background:var(--border);border-radius:99px;overflow:hidden}
+    .xp-bar-fill{
+      height:100%;border-radius:99px;
+      background:linear-gradient(90deg,var(--xp),#a78bfa);
+      transition:width 0.8s cubic-bezier(.4,0,.2,1);
+    }
+    .xp-next{font-size:0.72rem;color:var(--muted);margin-top:0.35rem;text-align:right}
+
+    /* ── STATS ROW ── */
+    .stats-row{
+      display:grid;grid-template-columns:repeat(3,1fr);
+      gap:0.6rem;max-width:580px;margin:0 auto 1.5rem;
+    }
+    .stat-card{
+      background:var(--surface);border:1px solid var(--border);
+      border-radius:12px;padding:0.75rem 1rem;text-align:center;
+    }
+    .stat-val{font-size:1.5rem;font-weight:700;line-height:1}
+    .stat-lbl{font-size:0.68rem;color:var(--muted2);margin-top:0.25rem;text-transform:uppercase;letter-spacing:0.07em}
+
+    /* ── PROGRESS RING ── */
+    .progress-wrap{display:flex;justify-content:center;margin:0 0 1.5rem;position:relative}
+    .ring-container{position:relative;width:110px;height:110px}
+    .ring-container svg{transform:rotate(-90deg)}
+    .ring-bg{fill:none;stroke:var(--border);stroke-width:9}
+    .ring-fill{fill:none;stroke:var(--accent);stroke-width:9;stroke-linecap:round;transition:stroke-dashoffset 0.7s cubic-bezier(.4,0,.2,1)}
+    .ring-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+    .ring-pct{font-size:1.4rem;font-weight:700;line-height:1}
+    .ring-sub{font-size:0.58rem;color:var(--muted2);margin-top:2px;letter-spacing:0.07em;text-transform:uppercase}
+
+    /* ── SUGGESTION CHIPS ── */
+    .chips-wrap{
+      display:flex;flex-wrap:wrap;gap:0.4rem;
+      max-width:580px;margin:0 auto 1rem;
+      padding:0 0.5rem;
+    }
+    .chip{
+      background:var(--surface);border:1px solid var(--border);
+      color:var(--muted2);border-radius:99px;
+      padding:0.3rem 0.75rem;font-size:0.78rem;font-family:inherit;
+      cursor:pointer;transition:all 0.15s;display:flex;align-items:center;gap:0.3rem;
+    }
+    .chip:hover{border-color:var(--accent);color:var(--text);background:var(--accent-glow)}
+
+    /* ── ADD FORM ── */
+    .add-form{
+      display:flex;gap:0.5rem;
+      max-width:580px;margin:0 auto 0.75rem;padding:0 0.5rem;
+    }
+    .form-fields{flex:1;display:flex;flex-direction:column;gap:0.4rem}
+    .form-row{display:flex;gap:0.4rem}
+    .add-form input[type=text]{
+      flex:1;background:var(--card);border:1.5px solid var(--border);
+      color:var(--text);border-radius:12px;padding:0.7rem 1rem;
+      font-family:inherit;font-size:0.9rem;outline:none;
+      transition:border-color 0.2s;
+    }
+    .add-form input[type=text]::placeholder{color:var(--muted)}
+    .add-form input[type=text]:focus{border-color:var(--accent)}
+    .cat-select{
+      background:var(--card);border:1.5px solid var(--border);
+      color:var(--muted2);border-radius:10px;padding:0.7rem 0.6rem;
+      font-family:inherit;font-size:0.8rem;outline:none;cursor:pointer;
+      transition:border-color 0.2s;
+    }
+    .cat-select:focus{border-color:var(--accent)}
+    .emoji-btn{
+      background:var(--card);border:1.5px solid var(--border);
+      border-radius:10px;padding:0.7rem 0.8rem;font-size:1.1rem;
+      cursor:pointer;transition:border-color 0.2s;
+    }
+    .emoji-btn:hover{border-color:var(--accent)}
+    .btn-add{
+      background:var(--accent);color:#fff;border:none;border-radius:12px;
+      padding:0 1.2rem;font-family:inherit;font-size:0.9rem;font-weight:600;
+      cursor:pointer;transition:background 0.2s,transform 0.1s;
+      white-space:nowrap;align-self:stretch;min-width:70px;
+    }
+    .btn-add:hover{background:var(--accent-h)}
+    .btn-add:active{transform:scale(0.96)}
+
+    /* ── EMOJI PICKER ── */
+    .emoji-picker{
+      max-width:580px;margin:0 auto 0.75rem;padding:0 0.5rem;
+      display:flex;flex-wrap:wrap;gap:0.3rem;
+      background:var(--card);border:1px solid var(--border);
+      border-radius:12px;padding:0.6rem;
+    }
+    .ep-emoji{
+      font-size:1.3rem;padding:0.3rem;border-radius:8px;cursor:pointer;
+      transition:background 0.15s;background:transparent;border:none;
+    }
+    .ep-emoji:hover{background:var(--border)}
+    .ep-emoji.selected{background:var(--accent-glow);outline:1.5px solid var(--accent)}
+
+    /* ── FILTER TABS ── */
+    .filter-tabs{display:flex;gap:0.4rem;justify-content:center;margin-bottom:1.25rem;flex-wrap:wrap}
+    .filter-tab{
+      background:var(--surface);border:1.5px solid var(--border);color:var(--muted2);
+      border-radius:8px;padding:0.3rem 0.8rem;font-family:inherit;
+      font-size:0.78rem;font-weight:500;cursor:pointer;transition:all 0.18s;
+    }
+    .filter-tab.active{background:var(--accent);border-color:var(--accent);color:#fff}
+    .filter-tab:not(.active):hover{border-color:var(--accent);color:var(--text)}
+
+    /* ── HABIT LIST ── */
+    .habit-list{list-style:none;max-width:580px;margin:0 auto;display:flex;flex-direction:column;gap:0.65rem;padding:0 0.5rem}
+
+    .habit-card{
+      background:var(--card);border:1.5px solid var(--border);
+      border-radius:18px;padding:0.9rem 1rem;
+      transition:border-color 0.25s,background 0.25s,transform 0.15s;
+      animation:slideIn 0.3s ease;
+    }
+    .habit-card.done{background:var(--done-bg);border-color:var(--done-border)}
+    .habit-card:hover{transform:translateY(-1px)}
+
+    .card-top{display:flex;align-items:center;gap:0.75rem}
+    .habit-emoji{font-size:1.3rem;line-height:1;min-width:1.6rem;text-align:center}
+    .habit-info{flex:1;min-width:0}
+    .habit-name{
+      font-size:0.93rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+      transition:color 0.2s;
+    }
+    .done .habit-name{color:var(--done);text-decoration:line-through;text-decoration-color:var(--done);}
+    .habit-meta{display:flex;align-items:center;gap:0.5rem;margin-top:0.2rem}
+    .cat-pill{
+      font-size:0.65rem;font-weight:600;border-radius:99px;padding:0.1rem 0.45rem;
+      letter-spacing:0.04em;text-transform:uppercase;
+    }
+    .streak-badge{
+      display:flex;align-items:center;gap:2px;
+      font-size:0.75rem;font-weight:700;color:var(--muted2);
+      transition:color 0.2s;
+    }
+    .done .streak-badge{color:var(--done)}
+
+    /* Check button */
+    .check-btn{
+      width:34px;height:34px;min-width:34px;border-radius:50%;
+      border:2px solid var(--border2);background:transparent;
+      cursor:pointer;display:flex;align-items:center;justify-content:center;
+      transition:background 0.2s,border-color 0.2s,transform 0.15s,box-shadow 0.2s;
+    }
+    .check-btn:hover{border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-glow);transform:scale(1.08)}
+    .done .check-btn{background:var(--done);border-color:var(--done);box-shadow:0 0 0 4px #10b98125}
+    .check-btn svg{
+      width:14px;height:14px;stroke:#fff;stroke-width:2.5;fill:none;
+      opacity:0;transform:scale(0.4);transition:opacity 0.2s,transform 0.25s cubic-bezier(.175,.885,.32,1.275);
+    }
+    .done .check-btn svg{opacity:1;transform:scale(1)}
+
+    /* Heatmap */
+    .heatmap{
+      display:flex;gap:4px;margin-top:0.65rem;
+      padding-top:0.65rem;border-top:1px solid var(--border);
+    }
+    .heatmap-day{
+      flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+    }
+    .hm-dot{width:100%;aspect-ratio:1;border-radius:4px;background:var(--border);transition:background 0.2s}
+    .hm-dot.done-day{background:var(--done)}
+    .hm-dot.today-dot{outline:2px solid var(--accent);outline-offset:1px}
+    .hm-lbl{font-size:0.58rem;color:var(--muted);letter-spacing:0.03em}
+
+    /* Delete */
+    .btn-delete{
+      background:none;border:none;color:var(--muted);cursor:pointer;
+      padding:4px;border-radius:8px;opacity:0;
+      transition:opacity 0.2s,color 0.2s;display:flex;align-items:center;
+    }
+    .habit-card:hover .btn-delete{opacity:1}
+    .btn-delete:hover{color:var(--danger)}
+    .btn-delete svg{width:15px;height:15px;stroke:currentColor;stroke-width:2.2;fill:none}
+
+    /* ── TOAST ── */
+    .toast{
+      position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(120px);
+      background:var(--card);border:1.5px solid var(--done-border);color:var(--text);
+      padding:0.75rem 1.5rem;border-radius:14px;font-size:0.9rem;font-weight:600;
+      z-index:1000;transition:transform 0.4s cubic-bezier(.175,.885,.32,1.275),opacity 0.4s;
+      white-space:nowrap;opacity:0;pointer-events:none;text-align:center;
+    }
+    .toast.visible{transform:translateX(-50%) translateY(0);opacity:1}
+
+    /* ── CONFETTI canvas ── */
+    #confetti-canvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:999}
+
+    /* ── EMPTY STATE ── */
+    .empty{text-align:center;color:var(--muted2);padding:3rem 1rem;font-size:0.9rem;max-width:580px;margin:0 auto}
+    .empty-icon{font-size:2.5rem;margin-bottom:0.75rem}
+
+    /* ── SECTION LABEL ── */
+    .section-lbl{
+      max-width:580px;margin:0 auto 0.6rem;padding:0 0.5rem;
+      font-size:0.7rem;font-weight:600;letter-spacing:0.1em;
+      text-transform:uppercase;color:var(--muted);
+    }
+
+    /* ── ANIMATIONS ── */
+    @keyframes slideIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+    @keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.18)}70%{transform:scale(0.93)}100%{transform:scale(1)}}
+    .pop{animation:pop 0.35s cubic-bezier(.175,.885,.32,1.275)}
+
+    @media(max-width:480px){
+      .stats-row{grid-template-columns:repeat(3,1fr)}
+      .btn-add{min-width:56px;padding:0 0.75rem}
+    }
+  </style>
+</head>
+<body>
+<canvas id="confetti-canvas"></canvas>
+<div class="toast" id="toast"></div>
+
+<div id="app">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="brand">MyTrack</div>
+    <div class="tagline">Build the life you want</div>
+    <div class="date-label" id="date-label"></div>
+  </div>
+
+  <!-- Quote -->
+  <div class="quote-bar" id="quote-bar">
+    <span class="quote-icon">✦</span>
+    <span id="quote-text"></span>
+  </div>
+
+  <!-- XP Panel -->
+  <div class="xp-panel">
+    <div class="xp-top">
+      <div class="xp-level">
+        <span id="level-name"></span>
+        <span class="level-badge" id="level-badge"></span>
+      </div>
+      <span class="xp-pts" id="xp-pts"></span>
+    </div>
+    <div class="xp-bar-wrap"><div class="xp-bar-fill" id="xp-bar"></div></div>
+    <div class="xp-next" id="xp-next"></div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-val" id="stat-total">0</div>
+      <div class="stat-lbl">Total Done</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="stat-best">0</div>
+      <div class="stat-lbl">Best Streak</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="stat-perfect">0</div>
+      <div class="stat-lbl">Perfect Days</div>
+    </div>
+  </div>
+
+  <!-- Progress ring -->
+  <div class="progress-wrap">
+    <div class="ring-container">
+      <svg viewBox="0 0 110 110" width="110" height="110">
+        <circle class="ring-bg" cx="55" cy="55" r="46"/>
+        <circle class="ring-fill" id="ring-fill" cx="55" cy="55" r="46"
+          stroke-dasharray="289.0" stroke-dashoffset="289.0"/>
+      </svg>
+      <div class="ring-center">
+        <span class="ring-pct" id="ring-pct">0%</span>
+        <span class="ring-sub">today</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Suggestions -->
+  <div class="section-lbl">Quick add</div>
+  <div class="chips-wrap" id="chips"></div>
+
+  <!-- Add form -->
+  <div class="add-form">
+    <div class="form-fields">
+      <div class="form-row">
+        <button class="emoji-btn" id="emoji-toggle-btn" title="Pick emoji">⭐</button>
+        <input type="text" id="new-habit-input" placeholder="New habit name…" maxlength="60"/>
+        <select class="cat-select" id="cat-select">
+          <option value="health">🌿 Health</option>
+          <option value="mind">🧠 Mind</option>
+          <option value="body">💪 Body</option>
+          <option value="social">💬 Social</option>
+          <option value="work">💼 Work</option>
+          <option value="other">✦ Other</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn-add" id="btn-add">+ Add</button>
+  </div>
+
+  <!-- Emoji picker -->
+  <div class="emoji-picker" id="emoji-picker" style="display:none"></div>
+
+  <!-- Filter tabs -->
+  <div class="filter-tabs" id="filter-tabs" style="display:none">
+    <button class="filter-tab active" data-filter="all">All</button>
+    <button class="filter-tab" data-filter="pending">Pending</button>
+    <button class="filter-tab" data-filter="done">Done ✓</button>
+  </div>
+
+  <!-- Habit list -->
+  <ul class="habit-list" id="habit-list"></ul>
+
+  <!-- Empty state -->
+  <div class="empty" id="empty-state">
+    <div class="empty-icon">✦</div>
+    <p>No habits yet. Add one above to start building your ritual.</p>
+  </div>
+
+</div>
+
+<script>
+const QUOTES = [
+  "We are what we repeatedly do. Excellence is not an act, but a habit.",
+  "Small daily improvements are the key to staggering long-term results.",
+  "The secret of your future is hidden in your daily routine.",
+  "You don't rise to the level of your goals, you fall to the level of your systems.",
+  "Motivation gets you started. Habit keeps you going.",
+  "Every action you take is a vote for the type of person you wish to become.",
+  "Success is the sum of small efforts, repeated day in and day out.",
+  "The chains of habit are too light to be felt until they are too heavy to be broken.",
+  "A year from now you'll wish you had started today.",
+  "It's not what we do once in a while that shapes our lives, but what we do consistently.",
+];
+
+const SUGGESTIONS = [
+  {emoji:"🧘",name:"Meditate 10 min",cat:"mind"},
+  {emoji:"💧",name:"Drink 8 glasses of water",cat:"health"},
+  {emoji:"📚",name:"Read 20 pages",cat:"mind"},
+  {emoji:"🏃",name:"30-min workout",cat:"body"},
+  {emoji:"🥗",name:"Eat vegetables",cat:"health"},
+  {emoji:"😴",name:"Sleep by 10 PM",cat:"health"},
+  {emoji:"✍️",name:"Journal entry",cat:"mind"},
+  {emoji:"🚶",name:"10,000 steps",cat:"body"},
+  {emoji:"📵",name:"No social media",cat:"mind"},
+  {emoji:"🙏",name:"Gratitude practice",cat:"mind"},
+];
+
+const EMOJIS = ["⭐","🔥","💎","🎯","🏆","💪","🧠","❤️","🌟","✨","🚀","🎵","📚","🌿","💧","🏃","🧘","✍️","🎨","💼","😴","🥗","🚶","📵","🙏","🌞","🍎","☕","🎮","🎸"];
+
+const LEVELS = [
+  {name:"Seedling",min:0,max:100},
+  {name:"Sprout",min:100,max:250},
+  {name:"Apprentice",min:250,max:500},
+  {name:"Consistent",min:500,max:900},
+  {name:"Dedicated",min:900,max:1400},
+  {name:"Champion",min:1400,max:2100},
+  {name:"Master",min:2100,max:3000},
+  {name:"Legend",min:3000,max:Infinity},
+];
+
+const CATS = {
+  health:{label:"Health",color:"var(--cat-health)",bg:"#10b98118"},
+  mind:{label:"Mind",color:"var(--cat-mind)",bg:"#7c3aed18"},
+  body:{label:"Body",color:"var(--cat-body)",bg:"#f59e0b18"},
+  social:{label:"Social",color:"var(--cat-social)",bg:"#ec489918"},
+  work:{label:"Work",color:"var(--cat-work)",bg:"#3b82f618"},
+  other:{label:"Other",color:"var(--cat-other)",bg:"#64748b18"},
+};
+
+let habits = [];
+let totalXP = 0;
+let perfectDays = 0;
+let filter = "all";
+let selectedEmoji = "⭐";
+let emojiPickerOpen = false;
+const today = new Date().toDateString();
+
+let confettiActive = false;
+
+function loadData() {
+  try {
+    habits = JSON.parse(localStorage.getItem("ritual_v2_habits") || "[]");
+    totalXP = parseInt(localStorage.getItem("ritual_v2_xp") || "0");
+    perfectDays = parseInt(localStorage.getItem("ritual_v2_perfect") || "0");
+  } catch(e) { habits = []; totalXP = 0; perfectDays = 0; }
+}
+
+function saveData() {
+  localStorage.setItem("ritual_v2_habits", JSON.stringify(habits));
+  localStorage.setItem("ritual_v2_xp", String(totalXP));
+  localStorage.setItem("ritual_v2_perfect", String(perfectDays));
+}
+
+function isDoneToday(h) {
+  return (h.completedDates || []).includes(today);
+}
+
+function calcStreak(h) {
+  if (!h.completedDates || !h.completedDates.length) return 0;
+  const dates = [...new Set(h.completedDates)]
+    .map(d => { const x = new Date(d); x.setHours(0,0,0,0); return x.getTime(); })
+    .sort((a,b) => b - a);
+  let streak = 0;
+  let check = new Date(); check.setHours(0,0,0,0);
+  for (const t of dates) {
+    if (t === check.getTime()) { streak++; check.setDate(check.getDate()-1); }
+    else break;
+  }
+  return streak;
+}
+
+function bestStreak() {
+  return habits.reduce((best, h) => Math.max(best, h.streak || 0), 0);
+}
+
+function totalDone() {
+  return habits.reduce((t, h) => t + (h.completedDates || []).length, 0);
+}
+
+function completionRate() {
+  if (!habits.length) return 0;
+  return habits.filter(h => isDoneToday(h)).length / habits.length;
+}
+
+function getLevelInfo(xp) {
+  for (let i = LEVELS.length-1; i >= 0; i--) {
+    if (xp >= LEVELS[i].min) return { ...LEVELS[i], idx: i };
+  }
+  return { ...LEVELS[0], idx: 0 };
+}
+
+function getWeek() {
+  const days = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate()-i); d.setHours(0,0,0,0);
+    days.push(d);
+  }
+  return days;
+}
+
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("visible");
+  setTimeout(() => t.classList.remove("visible"), 3000);
+}
+
+// ── CONFETTI ──
+function launchConfetti() {
+  if (confettiActive) return;
+  confettiActive = true;
+  const canvas = document.getElementById("confetti-canvas");
+  const ctx = canvas.getContext("2d");
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  const pieces = [];
+  const colors = ["#7C3AED","#10B981","#F59E0B","#EC4899","#818CF8","#34D399","#FCD34D"];
+  for (let i = 0; i < 120; i++) {
+    pieces.push({
+      x: Math.random() * canvas.width,
+      y: -10 - Math.random() * 200,
+      r: 4 + Math.random() * 6,
+      d: 8 + Math.random() * 6,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      tilt: Math.random() * 10 - 5,
+      tiltAngle: 0,
+      tiltAngleInc: 0.07 + Math.random() * 0.05,
+      rotation: Math.random() * Math.PI * 2,
+      rotSpeed: (Math.random() - 0.5) * 0.15,
+      shape: Math.random() > 0.5 ? "rect" : "circle",
+    });
+  }
+  let frame = 0;
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (const p of pieces) {
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rotation);
+      ctx.fillStyle = p.color;
+      if (p.shape === "rect") ctx.fillRect(-p.r, -p.r/2, p.r*2, p.r);
+      else { ctx.beginPath(); ctx.arc(0, 0, p.r/2, 0, Math.PI*2); ctx.fill(); }
+      ctx.restore();
+      p.y += p.d;
+      p.x += Math.sin(frame * 0.02 + p.tiltAngle) * 1.5;
+      p.tiltAngle += p.tiltAngleInc;
+      p.rotation += p.rotSpeed;
+      p.d += 0.02;
+    }
+    frame++;
+    if (frame < 220) requestAnimationFrame(draw);
+    else { ctx.clearRect(0, 0, canvas.width, canvas.height); confettiActive = false; }
+  }
+  draw();
+}
+
+// ── RENDER ──
+function renderXP() {
+  const lvl = getLevelInfo(totalXP);
+  const next = LEVELS[Math.min(lvl.idx + 1, LEVELS.length - 1)];
+  const pct = lvl.max === Infinity ? 100 : Math.round(((totalXP - lvl.min) / (lvl.max - lvl.min)) * 100);
+  document.getElementById("level-name").textContent = lvl.name;
+  document.getElementById("level-badge").textContent = "Lv " + (lvl.idx + 1);
+  document.getElementById("xp-pts").textContent = totalXP.toLocaleString() + " XP";
+  document.getElementById("xp-bar").style.width = pct + "%";
+  document.getElementById("xp-next").textContent = lvl.max === Infinity
+    ? "Max level reached 🏆"
+    : (lvl.max - totalXP) + " XP to " + next.name;
+}
+
+function renderStats() {
+  document.getElementById("stat-total").textContent = totalDone();
+  document.getElementById("stat-best").textContent = bestStreak();
+  document.getElementById("stat-perfect").textContent = perfectDays;
+}
+
+function renderRing() {
+  const rate = completionRate();
+  const circ = 289.0;
+  const fill = document.getElementById("ring-fill");
+  fill.style.strokeDashoffset = circ - circ * rate;
+  fill.style.stroke = rate >= 1 && habits.length > 0 ? "#10B981" : "#7C3AED";
+  document.getElementById("ring-pct").textContent = Math.round(rate * 100) + "%";
+
+
+}
+
+function didLogPerfectToday() {
+  return localStorage.getItem("ritual_v2_perfect_date") === today;
+}
+
+function renderHabits() {
+  const list = document.getElementById("habit-list");
+  const empty = document.getElementById("empty-state");
+  const filterTabs = document.getElementById("filter-tabs");
+  const week = getWeek();
+  const dayNames = ["S","M","T","W","T","F","S"];
+
+  let visible = habits;
+  if (filter === "done") visible = habits.filter(h => isDoneToday(h));
+  if (filter === "pending") visible = habits.filter(h => !isDoneToday(h));
+
+  filterTabs.style.display = habits.length ? "flex" : "none";
+  empty.style.display = (!habits.length || (habits.length && !visible.length)) ? "block" : "none";
+  if (habits.length && !visible.length) {
+    empty.querySelector("p").textContent = filter === "done"
+      ? "No completed habits yet." : "All habits done for today! 🎉";
+    empty.querySelector(".empty-icon").textContent = filter === "done" ? "😴" : "🏆";
+  } else if (!habits.length) {
+    empty.querySelector("p").textContent = "No habits yet. Add one above to start building your ritual.";
+    empty.querySelector(".empty-icon").textContent = "✦";
+  }
+
+  list.innerHTML = "";
+  for (const h of visible) {
+    const done = isDoneToday(h);
+    const cat = CATS[h.category] || CATS.other;
+    const li = document.createElement("li");
+    li.className = "habit-card" + (done ? " done" : "");
+    li.dataset.id = h.id;
+
+    // Heatmap
+    const hmDots = week.map((d, i) => {
+      const ds = d.toDateString();
+      const isDone = (h.completedDates || []).includes(ds);
+      const isToday = ds === today;
+      return `<div class="heatmap-day">
+        <div class="hm-dot${isDone ? " done-day" : ""}${isToday ? " today-dot" : ""}"></div>
+        <div class="hm-lbl">${dayNames[(d.getDay())]}</div>
+      </div>`;
+    }).join("");
+
+    li.innerHTML = `
+      <div class="card-top">
+        <button class="check-btn" data-action="toggle" data-id="${h.id}" aria-label="Toggle ${h.name}">
+          <svg viewBox="0 0 14 14"><polyline points="2,7 5.5,11 12,3"/></svg>
+        </button>
+        <span class="habit-emoji">${h.emoji || "⭐"}</span>
+        <div class="habit-info">
+          <div class="habit-name">${escHtml(h.name)}</div>
+          <div class="habit-meta">
+            <span class="cat-pill" style="color:${cat.color};background:${cat.bg}">${cat.label}</span>
+            <span class="streak-badge">🔥 ${h.streak || 0}</span>
+          </div>
+        </div>
+        <button class="btn-delete" data-action="delete" data-id="${h.id}" title="Remove habit" aria-label="Remove">
+          <svg viewBox="0 0 15 15"><line x1="11" y1="4" x2="4" y2="11"/><line x1="4" y1="4" x2="11" y2="11"/></svg>
+        </button>
+      </div>
+      <div class="heatmap">${hmDots}</div>
+    `;
+    list.appendChild(li);
+  }
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+function renderAll() {
+  renderXP(); renderStats(); renderRing(); renderHabits();
+}
+
+// ── EMOJI PICKER ──
+function renderEmojiPicker() {
+  const picker = document.getElementById("emoji-picker");
+  picker.innerHTML = EMOJIS.map(e =>
+    `<button class="ep-emoji${e === selectedEmoji ? " selected" : ""}" data-emoji="${e}">${e}</button>`
+  ).join("");
+}
+
+// ── SUGGESTION CHIPS ──
+function renderChips() {
+  const wrap = document.getElementById("chips");
+  wrap.innerHTML = SUGGESTIONS.slice(0, 8).map(s =>
+    `<button class="chip" data-sug-name="${escHtml(s.name)}" data-sug-emoji="${s.emoji}" data-sug-cat="${s.cat}">${s.emoji} ${escHtml(s.name)}</button>`
+  ).join("");
+}
+
+// ── INIT ──
+function init() {
+  loadData();
+  document.getElementById("date-label").textContent =
+    new Date().toLocaleDateString("en-US", { weekday:"long", month:"long", day:"numeric" });
+
+  const q = QUOTES[new Date().getDate() % QUOTES.length];
+  document.getElementById("quote-text").textContent = q;
+
+  renderChips();
+  renderEmojiPicker();
+  renderAll();
+
+  // Event delegation
+  document.addEventListener("click", e => {
+    const t = e.target.closest("[data-action]");
+    if (t) {
+      const id = parseInt(t.dataset.id);
+      if (t.dataset.action === "toggle") toggleHabit(id, t.closest(".check-btn"));
+      if (t.dataset.action === "delete") deleteHabit(id);
+      return;
+    }
+
+    // Filter tabs
+    const tab = e.target.closest(".filter-tab");
+    if (tab) {
+      filter = tab.dataset.filter;
+      document.querySelectorAll(".filter-tab").forEach(b => b.classList.remove("active"));
+      tab.classList.add("active");
+      renderHabits();
+      return;
+    }
+
+    // Emoji button toggle
+    if (e.target.closest("#emoji-toggle-btn")) {
+      emojiPickerOpen = !emojiPickerOpen;
+      document.getElementById("emoji-picker").style.display = emojiPickerOpen ? "flex" : "none";
+      return;
+    }
+
+    // Emoji picker selection
+    const ep = e.target.closest(".ep-emoji");
+    if (ep) {
+      selectedEmoji = ep.dataset.emoji;
+      document.getElementById("emoji-toggle-btn").textContent = selectedEmoji;
+      renderEmojiPicker();
+      return;
+    }
+
+    // Chip click
+    const chip = e.target.closest(".chip");
+    if (chip) {
+      document.getElementById("new-habit-input").value = chip.dataset.sugName;
+      selectedEmoji = chip.dataset.sugEmoji;
+      document.getElementById("emoji-toggle-btn").textContent = selectedEmoji;
+      document.getElementById("cat-select").value = chip.dataset.sugCat;
+      renderEmojiPicker();
+      document.getElementById("new-habit-input").focus();
+      return;
+    }
+  });
+
+  document.getElementById("btn-add").addEventListener("click", addHabit);
+  document.getElementById("new-habit-input").addEventListener("keydown", e => {
+    if (e.key === "Enter") addHabit();
+  });
+}
+
+function addHabit() {
+  const input = document.getElementById("new-habit-input");
+  const name = input.value.trim();
+  if (!name) { input.focus(); return; }
+  const cat = document.getElementById("cat-select").value;
+  habits.push({
+    id: Date.now(),
+    name,
+    emoji: selectedEmoji,
+    category: cat,
+    streak: 0,
+    completedDates: [],
+  });
+  input.value = "";
+  document.getElementById("emoji-picker").style.display = "none";
+  emojiPickerOpen = false;
+  saveData();
+  renderAll();
+  showToast("✦ Habit added!");
+}
+
+function toggleHabit(id, btnEl) {
+  const h = habits.find(x => x.id === id);
+  if (!h) return;
+  if (!h.completedDates) h.completedDates = [];
+  const idx = h.completedDates.indexOf(today);
+  const wasEmpty = idx === -1;
+  const rateBefore = completionRate();
+  if (wasEmpty) {
+    h.completedDates.push(today);
+    h.streak = calcStreak(h);
+    const xpGain = 10 + (h.streak * 2);
+    totalXP += xpGain;
+    if (btnEl) btnEl.classList.add("pop");
+    setTimeout(() => btnEl && btnEl.classList.remove("pop"), 400);
+    showToast("+" + xpGain + " XP · " + h.streak + " day streak 🔥");
+  } else {
+    h.completedDates.splice(idx, 1);
+    h.streak = calcStreak(h);
+    totalXP = Math.max(0, totalXP - 10);
+  }
+  saveData();
+  renderAll();
+  if (wasEmpty && completionRate() >= 1 && habits.length > 0 && rateBefore < 1) {
+    launchConfetti();
+    showToast("🎉 All habits done! Perfect day!");
+    if (!didLogPerfectToday()) {
+      perfectDays++;
+      localStorage.setItem("ritual_v2_perfect", String(perfectDays));
+      localStorage.setItem("ritual_v2_perfect_date", today);
+      renderStats();
+    }
+  }
+}
+
+function deleteHabit(id) {
+  if (!confirm("Remove this habit?")) return;
+  habits = habits.filter(h => h.id !== id);
+  saveData();
+  renderAll();
+}
+
+init();
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js")
+      .then(reg => console.log("MyTrack SW registered:", reg.scope))
+      .catch(err => console.warn("SW registration failed:", err));
+  });
+}
+</script>
+</body>
+</html>
